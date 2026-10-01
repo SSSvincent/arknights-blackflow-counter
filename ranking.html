@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实时排名榜单 · 黑流树海粥集杯#1</title>
+<!-- 复用计分器同一套样式表：头图、背景、面板、按钮全部一致 -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ============ HEADER（与首页同一张头图，同款描边/圆角/阴影） ============ -->
+  <header class="header">
+    <img src="img/title%20background.png"
+         alt="沉沦者的黑流树海 主题图"
+         width="1560" height="500">
+  </header>
+
+  <!-- ============ 小标题：实时排名榜单 ============ -->
+  <section class="panel rank-panel">
+    <h2>实时排名榜单</h2>
+
+    <!-- 榜单说明 + 状态行 -->
+    <div class="rank-meta">
+      <span class="rank-meta-item">共 <b id="rank-count">0</b> 位选手</span>
+      <span class="rank-meta-sep"></span>
+      <span class="rank-meta-item">更新于 <b id="rank-time">—</b></span>
+      <span class="rank-meta-sep"></span>
+      <span class="rank-meta-item rank-live"><i></i>实时</span>
+    </div>
+
+    <!-- 赛程切换：初赛 / 决赛 ============
+         两块榜单**完全独立**（各自的存档键与数据），互不影响。
+         初赛 = 原有的那一份（保留既有数据与形式）；决赛 = 另起一份新的。
+         切换只切视图，不合并、不搬运 —— 见 js/ranking.js 的 MODES / setBoard。 -->
+    <div class="rank-modes" id="rank-modes" role="tablist" aria-label="赛程切换">
+      <button type="button" class="rank-mode is-active" data-mode="prelim"
+              role="tab" aria-selected="true">初赛</button>
+      <button type="button" class="rank-mode" data-mode="final"
+              role="tab" aria-selected="false">决赛</button>
+    </div>
+
+    <!-- 表头（与数据行同一套 grid 模板，保证列对齐）
+         ⚠️ 「团队加分」「源石锭消耗」格必须带上 rk-team / rk-yuan、与数据行同款：
+            窄屏靠 `.rk-num:not(.rk-total):not(.rk-team):not(.rk-yuan)` 隐藏基础分/倍率两列，
+            表头少了对应 class 就会被一起隐藏，剩个没标题的数字列。 -->
+    <div class="rank-head" id="rank-head">
+      <div class="rk-col rk-pos">名次</div>
+      <div class="rk-col rk-name">选手</div>
+      <div class="rk-col rk-num">基础分</div>
+      <div class="rk-col rk-num">倍率</div>
+      <div class="rk-col rk-num rk-team">团队加分</div>
+      <div class="rk-col rk-num rk-yuan">源石锭消耗</div>
+      <div class="rk-col rk-num rk-total">总分</div>
+    </div>
+
+    <!-- 榜单数据行（由 js/ranking.js 渲染） -->
+    <div class="rank-list" id="rank-list"></div>
+
+    <!-- 空态 -->
+    <div class="rank-empty" id="rank-empty">
+      还没有上榜数据。点下面的「添加选手」，选择计分器导出的 txt 存档即可上榜。
+    </div>
+
+    <!-- 底部操作区：导出/导入（独占最左与最右两端，见 css 的 auto 外边距）+
+         添加队伍（仅决赛）/ 添加选手（上传 txt）/ 返回计分器 / 清空榜单 -->
+    <div class="rank-actions">
+      <!-- 真正的文件选择器：隐藏，由按钮代点（弹框不可用时的退路） -->
+      <input type="file" id="rank-file" accept=".txt,text/plain" multiple hidden>
+      <!-- ⚠️ 「导出 txt」是操作区的**第一个**子元素、「导入 txt」是**最后一个** ——
+           位置就是「最左 / 最右」的真相；css 再给它们 auto 外边距把中间那组挤到正中
+           （不能用 justify-content:space-between，那会把 6 个按钮等距摊开）。 -->
+      <button type="button" class="big-btn" id="btn-export-board">导出 txt</button>
+      <!-- ⚠️ 「添加队伍」只在【决赛】显示（初赛没有队伍概念）——
+           靠 `.rank-actions` 上的 data-board 属性 + css 控制显隐，见 syncModeUI()。 -->
+      <button type="button" class="big-btn gold" id="btn-add-team" hidden>添加队伍</button>
+      <button type="button" class="big-btn green" id="btn-add-player">添加选手</button>
+      <a class="big-btn blue" href="index.html">返回计分器</a>
+      <!-- 清空榜单（红色，二次确认后清空当前榜单，见 js/ranking.js clearBoard） -->
+      <button type="button" class="big-btn danger" id="btn-clear-board">清空榜单</button>
+      <button type="button" class="big-btn" id="btn-import-board">导入 txt</button>
+    </div>
+
+    <!-- 操作提示（导入成功/失败都在这里给反馈，不用 alert 打断） -->
+    <div class="rank-toast" id="rank-toast" hidden></div>
+  </section>
+
+  <!-- ============ 居中弹框（添加队伍 / 添加选手共用） ============
+       用户 2026-09-23 要求：点「添加队伍」弹一个屏幕居中的框，中间输入队名，
+       下方两个按钮「取消」「确定」；点「添加选手」同样弹框，选队伍 + 选 txt。
+       ⚠️ 弹框是**静态标记**（放在这里、不在 JS 里拼），JS 只负责开/关与内容填充：
+          `hidden` 属性是逻辑层真相（单测桩没有 css，靠它断言），
+          css 的 `.rank-modal[hidden]{display:none}` 是表现层。 -->
+  <div class="rank-modal" id="rank-modal" hidden role="dialog" aria-modal="true"
+       aria-labelledby="rank-modal-title">
+    <div class="modal-card">
+      <h3 class="modal-title" id="rank-modal-title">添加队伍</h3>
+      <div class="modal-body" id="rank-modal-body"></div>
+      <p class="modal-err" id="rank-modal-err" hidden></p>
+      <div class="modal-btns">
+        <button type="button" class="big-btn" id="rank-modal-cancel">取消</button>
+        <button type="button" class="big-btn green" id="rank-modal-ok">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 页脚署名（与首页一致） ============ -->
+  <footer class="page-footer">
+    作者：<a href="https://space.bilibili.com/510463176" target="_blank" rel="noopener noreferrer">拾柒ACTV</a>
+    　协同开发：<a href="https://www.workbuddy.cn" target="_blank" rel="noopener noreferrer">WorkBuddy</a>　<a href="https://space.bilibili.com/11417698" target="_blank" rel="noopener noreferrer">祁星qimstar</a>
+    　版本：1.0.1　日期：2026.9.23
+  </footer>
+
+</div>
+
+<!-- 榜单数据：单独一个文件，方便日后改动而不必碰页面结构 -->
+<script src="js/ranking-data.js"></script>
+<!-- 榜单渲染 -->
+<script src="js/ranking.js"></script>
+</body>
+</html>

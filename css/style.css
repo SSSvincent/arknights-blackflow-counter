@@ -1,0 +1,1096 @@
+/* ==========================================================================
+   黑流树海仙术杯#9 计分器 · 样式表
+   主题：深蓝底 + 青蓝霓虹描边（参考 qimstar.github.io/blackflowcounter）
+   ========================================================================== */
+
+:root{
+  --bg-deep:#050b16;
+  --bg-panel:rgba(11,25,45,.86);
+  --bg-panel-2:rgba(8,20,38,.92);
+  --border:#1d3d63;
+  --border-glow:#2a6ea8;
+  --accent:#39d0ff;
+  --accent-2:#7b5cff;
+  --accent-3:#00ffa3;
+  --danger:#ff5c7a;
+  --warn:#ffb547;
+  --info:#4d8dff;
+  --text:#dfe9f5;
+  --text-dim:#8aa3c0;
+  --text-mute:#5d7794;
+  --shadow:0 0 24px rgba(57,208,255,.12);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+
+body{
+  font-family:"HarmonyOS Sans SC","PingFang SC","Microsoft YaHei","Source Han Sans SC",system-ui,-apple-system,sans-serif;
+  background:
+    radial-gradient(1200px 700px at 15% -10%, rgba(123,92,255,.18), transparent 60%),
+    radial-gradient(1000px 600px at 90% 10%, rgba(57,208,255,.14), transparent 60%),
+    radial-gradient(900px 700px at 50% 110%, rgba(0,255,163,.08), transparent 60%),
+    var(--bg-deep);
+  color:var(--text);
+  line-height:1.55;
+  overflow-x:hidden;
+}
+
+/* 背景网格（中心亮、边缘淡出的科技感底纹） */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(57,208,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57,208,255,.04) 1px, transparent 1px);
+  background-size:48px 48px;
+  -webkit-mask-image:radial-gradient(ellipse at center, black 30%, transparent 80%);
+          mask-image:radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+.wrapper{
+  position:relative;z-index:1;
+  max-width:1400px;margin:0 auto;padding:12px;
+}
+
+/* ==========================================================================
+   HEADER —— 顶部标题页
+   纯图片横幅：宽度跟随容器，高度按原始比例（1560:500）自动计算，
+   因此窗口缩放时整张图等比自由缩放，永不裁切、永不拉伸变形。
+   ========================================================================== */
+.header{
+  position:relative;
+  width:100%;
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  background:#06121f;
+  box-shadow:var(--shadow), 0 6px 24px rgba(0,0,0,.5);
+  /* 消除图片作为行内元素时产生的基线空隙 */
+  line-height:0;
+  font-size:0;
+}
+
+.header img{
+  display:block;
+  width:100%;
+  height:auto;
+  /* 显式锁定比例，即使图片尚未加载完成，占位也不会跳变 */
+  aspect-ratio:1560 / 500;
+  object-fit:contain;
+}
+
+/* ==========================================================================
+   左右两侧主布局
+   左栏 / 右栏各占一半，栏内面板纵向堆叠；1180px 以下塌陷为单列。
+   ========================================================================== */
+/* ==========================================================================
+   LAYOUT —— 主布局
+   栏数由 JS 依容器宽度实时写入 --cols（3 / 2 / 1），无 JS 时退回单列。
+   各列高度由 grid 自动拉平（align-items:stretch），列内用 flex 纵向堆叠，
+   每列最后一块标 .grow 吸收高度差 → 各列底边对齐。
+   ========================================================================== */
+.layout{
+  margin-top:10px;
+  display:grid;
+  gap:10px;
+  --cols:1;
+  grid-template-columns:repeat(var(--cols), minmax(0,1fr));
+  align-items:stretch;
+}
+.side{
+  display:flex;flex-direction:column;gap:10px;min-width:0;
+}
+/* 高度差「分摊」而不是「全压在最后一块」：
+   JS 会按每块面板的自然高度占比写入 flex-grow，于是该列的富余高度按比例分给每一块，
+   增长幅度全列一致（看起来像整体放松了内距），不会出现某一栏最后一块内部空一大块的情况。
+   面板内容仍顶部对齐，只把小计行推到贴底。 */
+.panel.grow{
+  flex-grow:1;flex-shrink:1;flex-basis:auto;
+  display:flex;flex-direction:column;
+}
+.panel.grow .subtotal{margin-top:auto}
+
+/* ==========================================================================
+   PANEL —— 面板容器（沿用原站）
+   ========================================================================== */
+.panel{
+  background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;
+  padding:10px 12px;position:relative;overflow:hidden;
+  box-shadow:0 4px 18px rgba(0,0,0,.35);
+}
+.panel::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  opacity:.55;
+}
+.panel.purple::before{background:linear-gradient(90deg,transparent,var(--accent-2),transparent)}
+.panel.green::before{background:linear-gradient(90deg,transparent,var(--accent-3),transparent)}
+.panel.danger::before{background:linear-gradient(90deg,transparent,var(--danger),transparent)}
+.panel.warn::before{background:linear-gradient(90deg,transparent,var(--warn),transparent)}
+
+.panel h2{
+  font-size:15px;font-weight:700;letter-spacing:2px;color:var(--accent);
+  margin-bottom:4px;display:flex;align-items:center;gap:8px;
+}
+.panel.purple h2{color:#c4b5fd}
+.panel.green h2{color:var(--accent-3)}
+.panel.danger h2{color:var(--danger)}
+.panel.warn h2{color:var(--warn)}
+.panel h2::before{
+  content:"";width:6px;height:6px;border-radius:50%;background:currentColor;
+  box-shadow:0 0 8px currentColor;
+}
+/* 面板标题右侧的齿轮按钮（源石锭余额设置入口，2026-09-25 加）
+   ⚠️ `margin-left:auto` 负责把它推到标题行最右端 —— `.panel h2` 本身是 flex 容器，
+      前面只有那个 ::before 圆点与标题文字，所以「推到底」就是靠这个 auto。 */
+.panel-gear{
+  margin-left:auto;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;padding:0;border-radius:6px;
+  border:1px solid transparent;background:transparent;
+  color:var(--text-mute);cursor:pointer;
+  transition:color .15s ease,border-color .15s ease,background .15s ease;
+}
+.panel-gear:hover{color:var(--warn);border-color:var(--border-glow);background:rgba(255,196,71,.1)}
+.panel-gear:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.panel .hint{font-size:11.5px;color:var(--text-mute);margin-bottom:10px;line-height:1.5}
+.panel .subtotal{
+  margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:13px;color:var(--text-dim);
+}
+.panel .subtotal b{font-size:18px;color:var(--accent);font-weight:800;font-variant-numeric:tabular-nums}
+.panel.purple .subtotal b{color:#c4b5fd}
+.panel.green .subtotal b{color:var(--accent-3)}
+.panel.danger .subtotal b{color:var(--danger)}
+.panel.warn .subtotal b{color:var(--warn)}
+
+/* ==========================================================================
+   ROW —— 计分行（沿用原站）
+   ========================================================================== */
+.row{
+  display:flex;align-items:center;gap:8px;padding:5px 0;
+  border-bottom:1px solid rgba(29,61,99,.35);
+}
+.row:last-of-type{border-bottom:none}
+.row .label{flex:1;font-size:13px;color:var(--text);min-width:0}
+.row .label small{display:block;font-size:10.5px;color:var(--text-mute);margin-top:1px}
+.row .val{
+  font-size:11px;color:var(--accent);font-weight:700;
+  background:rgba(57,208,255,.08);border:1px solid rgba(57,208,255,.25);
+  padding:1px 7px;border-radius:6px;font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.row.danger .val{color:var(--danger);background:rgba(255,92,122,.08);border-color:rgba(255,92,122,.3)}
+.row.warn .val{color:var(--warn);background:rgba(255,181,71,.08);border-color:rgba(255,181,71,.3)}
+.row.green .val{color:var(--accent-3);background:rgba(0,255,163,.08);border-color:rgba(0,255,163,.3)}
+.row.purple .val{color:#c4b5fd;background:rgba(123,92,255,.1);border-color:rgba(123,92,255,.3)}
+
+/* ==========================================================================
+   BUTTON —— 增减按钮（沿用原站）
+   ========================================================================== */
+.btn{
+  width:26px;height:26px;border-radius:7px;border:1px solid var(--border-glow);
+  background:rgba(57,208,255,.08);color:var(--accent);cursor:pointer;
+  font-size:15px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;user-select:none;font-family:inherit;
+}
+.btn:hover{background:rgba(57,208,255,.22);transform:translateY(-1px);box-shadow:0 0 10px rgba(57,208,255,.4)}
+.btn:active{transform:translateY(0) scale(.94)}
+.btn.minus{color:var(--danger);border-color:#7a2c3f;background:rgba(255,92,122,.08)}
+.btn.minus:hover{background:rgba(255,92,122,.22);box-shadow:0 0 10px rgba(255,92,122,.4)}
+
+/* ==========================================================================
+   INPUT —— 计数输入框（沿用原站）
+   ========================================================================== */
+/* 隐藏所有 number 输入框的原生上下调节按钮（spinner） */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance:none;appearance:none;margin:0;
+}
+input[type="number"]{
+  -moz-appearance:textfield;appearance:textfield;
+}
+
+.count-input{
+  width:46px;height:26px;text-align:center;border-radius:7px;
+  border:1px solid var(--border);background:rgba(5,11,22,.7);color:var(--text);
+  font-size:13px;font-weight:700;font-family:inherit;font-variant-numeric:tabular-nums;
+  outline:none;transition:border-color .15s;
+}
+.count-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(57,208,255,.15)}
+
+.text-input{
+  width:100%;height:32px;padding:0 10px;border-radius:8px;
+  border:1px solid var(--border);background:rgba(5,11,22,.7);color:var(--text);
+  font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;
+}
+.text-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(57,208,255,.15)}
+.text-input::placeholder{color:var(--text-mute);opacity:.65}
+
+/* ==========================================================================
+   FIELD —— 表单字段（沿用原站）
+   ========================================================================== */
+.field{margin-bottom:8px}
+.field label{display:block;font-size:11.5px;color:var(--text-dim);margin-bottom:4px;letter-spacing:.5px}
+
+/* ==========================================================================
+   通关时长输入（沿用原站）
+   ========================================================================== */
+.dur-inputs{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dur-num{width:64px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.dur-unit{font-size:12px;color:var(--text-dim)}
+
+/* ==========================================================================
+   纯数字输入框（沿用原站）
+   ========================================================================== */
+.num-only{font-weight:700;font-variant-numeric:tabular-nums;text-align:center}
+
+/* ==========================================================================
+   二选一模式切换（沿用原站 .mode-switch / .mode-btn）
+   ========================================================================== */
+.mode-switch{display:flex;gap:0;border-radius:7px;overflow:hidden;border:1px solid var(--border);width:fit-content}
+.mode-btn{
+  padding:3px 9px;font-size:10.5px;font-weight:700;font-family:inherit;
+  border:none;background:rgba(5,11,22,.6);color:var(--text-mute);cursor:pointer;
+  transition:all .15s;letter-spacing:.5px;
+}
+.mode-btn:hover{color:var(--text)}
+.mode-btn.active{background:var(--accent);color:#0a0f1a}
+
+/* 条件展开区默认隐藏（JS 控制显示） */
+[hidden]{display:none !important}
+
+/* ==========================================================================
+   TOGGLE ROW —— 开关型行（沿用原站）
+   ========================================================================== */
+.toggle-row{
+  display:flex;align-items:center;gap:10px;padding:7px 10px;margin:5px 0;
+  border-radius:9px;border:1px solid var(--border);background:rgba(5,11,22,.45);
+  cursor:pointer;transition:all .18s;user-select:none;
+}
+.toggle-row:hover{border-color:var(--border-glow);background:rgba(57,208,255,.06)}
+.toggle-row.active{
+  border-color:var(--accent);background:rgba(57,208,255,.14);
+  box-shadow:0 0 14px rgba(57,208,255,.25), inset 0 0 18px rgba(57,208,255,.08);
+}
+.toggle-row.active.danger{border-color:var(--danger);background:rgba(255,92,122,.14);box-shadow:0 0 14px rgba(255,92,122,.25)}
+.toggle-row.active.warn{border-color:var(--warn);background:rgba(255,181,71,.14);box-shadow:0 0 14px rgba(255,181,71,.25)}
+.toggle-row.active.green{border-color:var(--accent-3);background:rgba(0,255,163,.12);box-shadow:0 0 14px rgba(0,255,163,.22)}
+.toggle-row.active.purple{border-color:var(--accent-2);background:rgba(123,92,255,.16);box-shadow:0 0 14px rgba(123,92,255,.3)}
+
+/* 子项：缩进 + 左侧连接线，视觉上隶属于上一行父项 */
+.toggle-row.sub{
+  margin-left:22px;padding:5px 10px;position:relative;
+  background:rgba(8,20,38,.55);
+  border-color:rgba(123,92,255,.28);
+}
+.toggle-row.sub::before{
+  content:"";position:absolute;left:-14px;top:50%;
+  width:14px;height:1px;background:rgba(123,92,255,.45);
+}
+.toggle-row.sub .t-label{font-size:12.5px;color:var(--text-dim)}
+.toggle-row.sub.active .t-label{color:var(--text)}
+.toggle-row.sub.active{border-color:var(--accent-2);background:rgba(123,92,255,.14)}
+.toggle-row.sub.active::before{background:var(--accent-2)}
+
+/* 不可选状态（视觉灰化但仍可点击：点击后触发替换/自动勾选父项） */
+.toggle-row.disabled{
+  opacity:.42;cursor:pointer;filter:grayscale(.6);
+  transition:opacity .18s, filter .18s, border-color .18s, background .18s;
+}
+.toggle-row.disabled:hover{
+  opacity:.9;filter:grayscale(.15);
+  border-color:var(--warn);background:rgba(255,181,71,.08);
+}
+.toggle-row.disabled .t-check{border-style:dashed}
+.toggle-row.disabled .t-label{color:var(--text-mute)}
+.toggle-row.disabled:hover .t-label{color:var(--text)}
+.toggle-row .t-label{flex:1;font-size:13px}
+.toggle-row .t-label small{display:block;font-size:10.5px;color:var(--text-mute);margin-top:1px}
+.toggle-row .t-val{font-size:12px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.toggle-row.danger .t-val{color:var(--danger)}
+.toggle-row.warn .t-val{color:var(--warn)}
+.toggle-row.green .t-val{color:var(--accent-3)}
+.toggle-row.purple .t-val{color:#c4b5fd}
+.toggle-row .t-check{
+  width:16px;height:16px;border-radius:4px;border:1.5px solid var(--text-mute);
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;
+  transition:all .15s;flex-shrink:0;
+}
+.toggle-row.active .t-check{background:currentColor;border-color:currentColor;color:var(--bg-deep)}
+.toggle-row.active.danger .t-check{background:var(--danger);border-color:var(--danger);color:#fff}
+.toggle-row.active.warn .t-check{background:var(--warn);border-color:var(--warn);color:#1a1206}
+.toggle-row.active.green .t-check{background:var(--accent-3);border-color:var(--accent-3);color:#04150e}
+.toggle-row.active.purple .t-check{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+.toggle-row.active .t-check{color:inherit}
+.toggle-row.active .t-check::after{content:"✓";color:var(--bg-deep);font-weight:900}
+.toggle-row.active.danger .t-check::after,.toggle-row.active.warn .t-check::after,
+.toggle-row.active.green .t-check::after,.toggle-row.active.purple .t-check::after{color:inherit}
+.toggle-row.active .t-check::after{color:#04101c}
+
+/* ==========================================================================
+   通关结算 / 总分
+   本项目改成「面板内并排两列」：左＝结算输入，右＝玩家名 + 总分展示。
+   面板横跨整幅，故留出与 .layout 一致的 10px 上边距。
+   ========================================================================== */
+.total-panel{margin-top:10px}
+
+/* 并排两列（窄屏 ≤720px 时堆叠成上下，见下方响应式） */
+.total-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:14px 28px;
+  align-items:stretch;
+}
+.total-left{min-width:0}
+
+.total-section{
+  min-width:0;margin-top:0;
+  border-left:1px dashed var(--border);
+  padding-left:28px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+}
+.total-section .total-header{display:flex;align-items:center;justify-content:center;width:100%;gap:8px}
+.total-section .total-label{font-size:12px;color:var(--text-dim);letter-spacing:3px}
+.total-section .total-value{
+  font-size:32px;font-weight:900;letter-spacing:1.5px;line-height:1.2;
+  min-height:38px;display:flex;align-items:center;justify-content:center;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;text-align:center;
+  background:linear-gradient(90deg,#9be9ff,#fff 45%,#c4b5fd);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.total-section .total-value.negative{
+  background:linear-gradient(90deg,#ff9bb0,#fff 45%,#ffc48a);
+  -webkit-background-clip:text;background-clip:text;
+}
+/* 选手名：与总分数字同款字体样式，仅额外允许换行（名字可能很长） */
+.total-section .total-name{
+  white-space:normal;word-break:break-word;line-height:1.15;padding:0 4px;
+}
+.total-section .breakdown{
+  width:100%;display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--text-mute);
+  justify-content:center;
+}
+.total-section .breakdown span b{color:var(--accent);font-variant-numeric:tabular-nums;font-weight:700}
+.total-section .breakdown span.danger b{color:var(--danger)}
+.total-section .breakdown span.green b{color:var(--accent-3)}
+.total-section .breakdown span.purple b{color:#c4b5fd}
+.total-section .breakdown span.warn b{color:var(--warn)}
+
+.total-btns{display:flex;gap:8px;width:100%;justify-content:center}
+/* 三个按钮（导出 / 归零 / 导入）等分整行；只有一个按钮时也不会拉满整行 */
+.total-btns .big-btn{flex:1 1 140px;max-width:320px;min-width:0}
+/* 「查看实时榜单」单独占一行，排在三个按钮下方；与上一行间距略小，视觉上仍属同一组 */
+.total-btns-second{margin-top:-2px}
+.total-btns-second .big-btn{flex:1 1 100%;max-width:100%}
+
+.big-btn{
+  padding:10px 22px;border-radius:10px;border:1px solid var(--border-glow);
+  background:rgba(57,208,255,.1);color:var(--accent);cursor:pointer;
+  font-size:14px;font-weight:700;letter-spacing:2px;font-family:inherit;
+  transition:all .18s;
+}
+.big-btn:hover{background:rgba(57,208,255,.24);box-shadow:0 0 18px rgba(57,208,255,.4);transform:translateY(-1px)}
+.big-btn:active{transform:translateY(0) scale(.97)}
+.big-btn.danger{color:var(--danger);border-color:#7a2c3f;background:rgba(255,92,122,.1)}
+.big-btn.danger:hover{background:rgba(255,92,122,.24);box-shadow:0 0 18px rgba(255,92,122,.4)}
+/* 导出 = 绿；导入 = 蓝 */
+.big-btn.green{color:var(--accent-3);border-color:#1d7a56;background:rgba(0,255,163,.1)}
+.big-btn.green:hover{background:rgba(0,255,163,.24);box-shadow:0 0 18px rgba(0,255,163,.4)}
+.big-btn.blue{color:var(--info);border-color:#2a5aa8;background:rgba(77,141,255,.12)}
+.big-btn.blue:hover{background:rgba(77,141,255,.26);box-shadow:0 0 18px rgba(77,141,255,.45)}
+/* 查看实时榜单 = 紫（与紫色系面板「藏品与路线」「商店」呼应） */
+.big-btn.purple{color:#c4b5fd;border-color:#5b46a8;background:rgba(123,92,255,.12);text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.big-btn.purple:hover{background:rgba(123,92,255,.28);box-shadow:0 0 18px rgba(123,92,255,.45)}
+/* 添加队伍 = 金（仅决赛出现，与初赛的绿色「添加选手」区分开） */
+.big-btn.gold{color:#ffd166;border-color:#8a6a24;background:rgba(255,196,71,.12)}
+.big-btn.gold:hover{background:rgba(255,196,71,.26);box-shadow:0 0 18px rgba(255,196,71,.45)}
+/* 链接型按钮：焦点环沿用青色，键盘 Tab 到时能看清 */
+.big-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ==========================================================================
+   赛事规则 —— 通栏面板（位于头图与所有栏目之间）
+   结构与先后顺序：标题 → 规则列表 → 输入框（标题、列表、输入框都居中）。
+   条目：左＝序号 / 中＝规则文字 / 右＝删除键；整行可拖动排序
+   （拖动时直接改 DOM 顺序做实时预览，松手后再把 DOM 顺序回写进 state）。
+   ========================================================================== */
+.rules-panel{margin-top:10px}
+
+/* 标题居中（.panel h2 本身是 flex，所以居中要落在 justify-content 上） */
+.rules-panel > h2{justify-content:center;letter-spacing:3px}
+
+/* 列表、空提示、输入行都收在同一个居中的窄栏里，避免通栏下文字被拉得过开 */
+.rules-list,.rules-empty,.rules-input-row{
+  max-width:900px;margin-left:auto;margin-right:auto;
+}
+
+.rules-list{
+  list-style:none;margin-top:0;margin-bottom:10px;padding:0;
+  display:flex;flex-direction:column;gap:6px;
+}
+
+.rules-item{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 10px;border-radius:9px;
+  border:1px solid var(--border);background:rgba(5,11,22,.45);
+  cursor:grab;transition:border-color .15s, background .15s, opacity .15s;
+}
+.rules-item:hover{border-color:var(--border-glow);background:rgba(57,208,255,.06)}
+.rules-item:active{cursor:grabbing}
+/* 正在拖动的条目：淡出 + 虚线，提示「它正在被搬走」 */
+.rules-item.dragging{opacity:.4;border-style:dashed;background:rgba(5,11,22,.3)}
+
+/* 左侧序号 */
+.rules-idx{
+  flex:0 0 26px;text-align:center;line-height:1.5;padding:1px 0;
+  font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;
+  color:var(--accent);background:rgba(57,208,255,.08);
+  border:1px solid rgba(57,208,255,.25);border-radius:6px;
+}
+
+/* 中间规则文字（居中；很长的规则可换行） */
+.rules-text{
+  flex:1 1 auto;min-width:0;text-align:center;
+  font-size:13px;color:var(--text);word-break:break-word;
+}
+
+/* 右侧删除键 */
+.rules-del{
+  flex:0 0 auto;width:24px;height:24px;border-radius:7px;
+  border:1px solid #7a2c3f;background:rgba(255,92,122,.08);color:var(--danger);
+  font-size:15px;font-weight:700;line-height:1;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.rules-del:hover{background:rgba(255,92,122,.26);box-shadow:0 0 10px rgba(255,92,122,.4)}
+.rules-del:active{transform:scale(.92)}
+
+/* 空列表时的提示（占的就是列表那块区域） */
+.rules-empty{
+  text-align:center;font-size:12px;color:var(--text-mute);
+  padding:10px 0;margin-bottom:6px;
+}
+
+/* 输入框 + 右侧锁定开关 */
+.rules-input-row{display:flex;align-items:center;gap:8px}
+.rules-input-row .rules-input{flex:1 1 auto;min-width:0;display:block;height:34px}
+.rules-input:disabled{opacity:.5;cursor:not-allowed}
+
+.rules-lock{
+  flex:0 0 auto;height:34px;padding:0 14px;border-radius:8px;
+  border:1px solid var(--border-glow);background:rgba(57,208,255,.08);color:var(--accent);
+  font-size:12.5px;font-weight:700;letter-spacing:1px;font-family:inherit;
+  cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap;
+}
+.rules-lock:hover{background:rgba(57,208,255,.2);box-shadow:0 0 12px rgba(57,208,255,.3)}
+.rules-lock:active{transform:scale(.96)}
+/* 已锁定：改成琥珀色高亮，并在文字上直接写明状态 */
+.rules-lock.active{
+  border-color:var(--warn);background:rgba(255,181,71,.14);color:var(--warn);
+  box-shadow:0 0 12px rgba(255,181,71,.25);
+}
+.rules-lock.active:hover{background:rgba(255,181,71,.26);box-shadow:0 0 12px rgba(255,181,71,.4)}
+
+/* 锁定（只读）状态：条目褪成纯文字，隐藏删除键，也去掉可拖动的光标暗示 */
+.rules-list.locked .rules-item{
+  background:none;border-color:transparent;cursor:default;
+  padding-left:0;padding-right:0;
+}
+.rules-list.locked .rules-item:hover{background:none;border-color:transparent}
+/* ⚠️⚠️ 锁定时把删除键「藏而不摘」—— 用 visibility:hidden，**绝不能改用 display:none**。
+   条目是 flex 行：序号(26px) + 间距 + 文字(flex:1) + 间距 + 删除键(24px)。
+   一旦 display:none 把它摘掉，flex 会连它和它的间距一起回收（24+10=34px），
+   中间那格文字的可居中区间随之变宽 → **文字整体右移 17px**，看着就是「不居中了」。
+   visibility:hidden 保留占位（也就不参与命中测试、不在 Tab 序里），居中和未锁定时完全一致。 */
+.rules-list.locked .rules-del{visibility:hidden}
+
+/* ==========================================================================
+   响应式
+   栏数（3 / 2 / 1）由 js/app.js 的 syncColumns() 决定，这里只处理与栏数无关的收窄
+   ========================================================================== */
+@media (max-width:720px){
+  .wrapper{padding:8px}
+  .header{border-radius:12px}
+  .total-grid{grid-template-columns:1fr;gap:12px}
+  .total-section{
+    border-left:none;padding-left:0;
+    border-top:1px dashed var(--border);padding-top:12px;
+  }
+  .total-section .total-value{font-size:30px}
+  .big-btn{padding:8px 14px;font-size:12px;letter-spacing:1px}
+  /* 窄屏：缩掉序号列与删除键的宽度，给规则文字留地方（文字仍保持居中） */
+  .rules-idx{flex-basis:22px;font-size:11px}
+  .rules-item{gap:8px;padding:6px 8px}
+  .rules-text{font-size:12.5px}
+  .rules-input-row{gap:6px}
+  .rules-lock{padding:0 10px;font-size:11.5px;letter-spacing:0}
+}
+
+/* ==========================================================================
+   页脚署名
+   —— 纯展示的一行小字，不属于任何 .panel，因此不参与 syncColumns() 的分栏配平。
+      放在 .wrapper 内、最后一个 section 之后，宽度随内容居中。
+   ========================================================================== */
+.page-footer{
+  margin:6px 4px 2px;
+  padding:10px 0 4px;
+  text-align:center;
+  font-size:11.5px;
+  line-height:1.7;
+  letter-spacing:.5px;
+  color:var(--text-mute);
+  user-select:text;   /* 允许选中复制，别被当成装饰 */
+}
+.page-footer a{
+  color:var(--text-dim);
+  text-decoration:none;
+  border-bottom:1px dashed var(--border-glow);
+  padding-bottom:1px;
+  transition:color .15s ease, border-color .15s ease;
+}
+.page-footer a:hover{
+  color:var(--accent);
+  border-bottom-color:var(--accent);
+}
+
+/* ==========================================================================
+   实时排名榜单（ranking.html 专用）
+   —— 与计分器共用本样式表：头图 .header、背景 body、面板 .panel、按钮 .big-btn 全部复用，
+      这里只补榜单自己的「元信息行 / 表头 / 数据行 / 空态」。
+      列宽用 grid 模板统一由 CSS 变量控制，表头与数据行共用同一份，天然对齐。
+   ========================================================================== */
+.rank-panel{--rk-cols:54px minmax(0,1fr) 82px 62px 78px 96px 106px;--rk-del-w:28px;margin-top:10px}
+
+/* 元信息行 */
+.rank-meta{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;
+  margin:2px 0 12px;font-size:12px;color:var(--text-mute);letter-spacing:.5px;
+}
+.rank-meta-item b{color:var(--text-dim);font-weight:700;font-variant-numeric:tabular-nums}
+.rank-meta-sep{width:1px;height:11px;background:var(--border)}
+.rank-live{display:inline-flex;align-items:center;gap:5px;color:var(--accent-3)}
+.rank-live i{
+  width:7px;height:7px;border-radius:50%;background:var(--accent-3);
+  box-shadow:0 0 8px var(--accent-3);animation:rankPulse 1.6s ease-in-out infinite;
+}
+@keyframes rankPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+
+/* 赛程切换（初赛 / 决赛）—— 元信息行小字下方。
+   两块榜单完全独立，这里只切视图。做成胶囊里两个小标签，不抢主按钮的视线。 */
+.rank-modes{
+  display:inline-flex;align-items:center;gap:2px;
+  padding:3px;border-radius:10px;
+  border:1px solid var(--border);background:rgba(8,20,38,.7);
+  margin:0 auto 12px;
+}
+.rank-modes-wrap{display:flex;justify-content:center}
+.rank-mode{
+  appearance:none;-webkit-appearance:none;
+  padding:5px 20px;border:0;border-radius:8px;cursor:pointer;
+  font-family:inherit;font-size:12.5px;letter-spacing:1.5px;
+  background:transparent;color:var(--text-mute);
+  transition:color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.rank-mode:hover{color:var(--text-dim)}
+.rank-mode.is-active{
+  color:var(--accent);background:rgba(57,208,255,.14);
+  box-shadow:inset 0 0 0 1px rgba(57,208,255,.35);
+  font-weight:700;
+}
+.rank-mode:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 决赛是本届的新榜单：给它一点点区分（活跃时用紫色，与初赛的青色分开） */
+.rank-mode[data-mode="final"].is-active{
+  color:#c4b5fd;background:rgba(123,92,255,.16);
+  box-shadow:inset 0 0 0 1px rgba(123,92,255,.4);
+}
+/* 当前正在看哪一块，给面板一个细边提示，避免「以为是同一份榜单」 */
+.rank-panel[data-board="final"]{border-color:rgba(123,92,255,.4)}
+
+/* 表头 + 数据行：共用同一份列模板。
+   ⚠️ 末尾多出的 `var(--rk-del-w)` 是**给行尾删除键预留的第 8 条轨道**（2026-09-24 加）：
+      表头只有 7 格 → 第 8 条轨道空着；数据行有 8 格 → 删除键正好落在这条轨道里。
+      这样删除键**不会挤动前 7 列的宽度**（若改用 position:absolute 压上去，会盖住总分那一格），
+      表头与数据行依旧逐列对齐。 */
+.rank-head,.rank-row{
+  display:grid;
+  grid-template-columns:var(--rk-cols) var(--rk-del-w);
+  gap:8px;align-items:center;
+}
+.rank-head{
+  padding:0 12px 8px;border-bottom:1px solid var(--border);
+  font-size:11.5px;color:var(--text-mute);letter-spacing:1.5px;
+}
+.rk-col{min-width:0}
+.rk-num{text-align:right}
+.rk-pos{text-align:center}
+
+.rank-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+
+.rank-row{
+  padding:9px 12px;border-radius:10px;
+  border:1px solid var(--border);
+  background:rgba(8,20,38,.62);
+  transition:background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.rank-row:hover{background:rgba(57,208,255,.08);border-color:var(--border-glow);transform:translateX(2px)}
+
+/* 名次徽章 */
+.rank-row .rk-pos{
+  font-size:15px;font-weight:900;letter-spacing:.5px;
+  font-variant-numeric:tabular-nums;color:var(--text-mute);
+}
+/* 前三名：金 / 银 / 铜 */
+.rank-row.top1{border-color:rgba(255,181,71,.55);background:linear-gradient(90deg,rgba(255,181,71,.14),rgba(8,20,38,.62) 55%)}
+.rank-row.top2{border-color:rgba(200,214,232,.45);background:linear-gradient(90deg,rgba(200,214,232,.11),rgba(8,20,38,.62) 55%)}
+.rank-row.top3{border-color:rgba(214,146,90,.45);background:linear-gradient(90deg,rgba(214,146,90,.12),rgba(8,20,38,.62) 55%)}
+.rank-row.top1 .rk-pos{color:#ffb547}
+.rank-row.top2 .rk-pos{color:#c8d6e8}
+.rank-row.top3 .rk-pos{color:#d6925a}
+
+/* 选手名 */
+.rank-row .rk-name{
+  font-size:13.5px;color:var(--text);font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.rank-row .rk-name small{display:block;font-size:10.5px;color:var(--text-mute);font-weight:400;letter-spacing:.3px}
+
+/* 数值列 */
+.rank-row .rk-num{font-size:12.5px;color:var(--text-dim);font-variant-numeric:tabular-nums}
+.rank-row .rk-num.dim{color:var(--text-mute)}
+/* 团队加分：初赛恒为 0，用更淡的颜色 + 比正文小一号，避免和基础分抢视线 */
+.rank-row .rk-team{font-size:11.5px;color:var(--text-mute)}
+.rank-row .rk-team:not(:empty){letter-spacing:.2px}
+/* 源石锭消耗：**绿色**显示（用户 2026-09-23 要求）。
+   用 --accent-3（青绿，主题里的「正向」色），并加点秤重让它在暗底上更清晰。 */
+.rank-row .rk-yuan{
+  color:var(--accent-3);
+  font-weight:700;
+  text-shadow:0 0 10px rgba(0,255,163,.18);
+}
+/* 总分：与首页总分同款渐变字 */
+.rank-row .rk-total{
+  font-size:17px;font-weight:900;letter-spacing:.5px;
+  background:linear-gradient(90deg,#9be9ff,#fff 45%,#c4b5fd);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.rank-row .rk-total.negative{
+  background:linear-gradient(90deg,#ff8fa3,#fff 45%,#ff5c7a);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+
+/* 行尾的「删除选手」键（2026-09-24 加）：在行上**向左拖动**才亮出来，点页面别处收起。
+   它落在第 8 条预留轨道里（见上面的 grid 模板），所以出场时不会推动任何一列。
+   ⚠️ 隐藏用 visibility 而不是 display:none —— 保持「位置在、只是看不见」，
+      而且 visibility:hidden 不进命中测试、不在 Tab 序里，行为上等于消失
+      （同「锁定赛事规则」那次的结论：flex/grid 里藏一格时先想清楚要不要留占位）。 */
+.rank-row .row-del{
+  appearance:none;-webkit-appearance:none;
+  width:26px;height:26px;padding:0;justify-self:end;
+  display:inline-flex;align-items:center;justify-content:center;
+  border-radius:8px;cursor:pointer;
+  font-family:inherit;font-size:12px;line-height:1;
+  border:1px solid rgba(255,92,122,.42);
+  background:rgba(255,92,122,.12);color:var(--danger);
+  visibility:hidden;opacity:0;
+  transition:opacity .14s ease, background .14s ease, border-color .14s ease;
+}
+.rank-row .row-del:hover{background:rgba(255,92,122,.26);border-color:var(--danger)}
+.rank-row .row-del:focus-visible{outline:2px solid var(--danger);outline-offset:2px}
+
+/* 「已拖开删除键」的那一行：给一点危险色提示，明确「你要删的是这一条」。
+   ⚠️ 这条规则排在 .top1/.top2/.top3 之后 —— 同为 0,2,0 特异性时靠后写取胜，
+      前三名的金银铜底色会被换成危险色，这是有意的（删除态比名次配色更需要被看见）。 */
+.rank-row.is-armed{
+  border-color:rgba(255,92,122,.6);
+  background:rgba(255,92,122,.09);
+}
+.rank-row.is-armed .row-del{visibility:visible;opacity:1}
+
+/* ---------- 「向左拖动」手势（2026-09-24：取代原先的双击） ----------
+   拖动期间只有 7 个**数据格**位移（transform，不参与布局），
+   删除键所在的那一格原地不动 —— 视觉上「内容被推向左、右侧空出来」。
+   ⚠️ 松手后数据格会归位（js 清掉 transform），所以静止时前 7 列仍与表头逐列对齐；
+      也就是说删除键**不是在拖动中就地停留**，而是拖够距离后「亮出来」。 */
+.rank-row > .rk-col{transition:transform .18s ease}
+/* 跟手期间不要过渡，否则位移会「追不上手指」 */
+.rank-row.is-swiping > .rk-col{transition:none}
+.rank-row.is-swiping{
+  user-select:none;-webkit-user-select:none;
+  cursor:grabbing;
+}
+/* ⚠️ touch-action:pan-y —— 触屏上把**纵向**手势留给浏览器滚动、横向留给 JS，
+   否则手指横滑会被浏览器当成页面平移，pointermove 中途就不来了。 */
+.rank-row{touch-action:pan-y;cursor:grab}
+
+/* 空态 */
+.rank-empty{
+  margin-top:10px;padding:22px 12px;text-align:center;
+  font-size:12.5px;color:var(--text-mute);line-height:1.8;
+  border:1px dashed var(--border);border-radius:10px;
+}
+
+/* 底部操作区 */
+.rank-actions{
+  display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:14px;
+}
+/* ⚠️ flex 的**换行判定只看 flex-basis** —— 能压缩也不算数：6 个 240px 塞不进一行时
+   会直接折成两行（两个端点按钮就落到不同行上去了，白忙一场）。所以 basis 收到 200px：
+   4×200 + 两个「档案键」约 100×2 + 5×10 间距 ≈ 1050px，1400px 版心下一行稳稳放得下。 */
+.rank-actions .big-btn{flex:0 1 200px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+/* 「清空榜单」红色按键（危险操作）：与「添加选手/返回计分器」**同在一行**，
+   跟它们一样的宽度与间距（用户 2026-09-23 明确要求「不要单开一行」）。
+   防误触靠 confirm 二次确认，不靠排版隔离。 */
+.rank-actions #btn-clear-board{
+  border-color:#7a2c3f;color:var(--danger);background:rgba(255,92,122,.1);
+}
+
+/* 「导出 txt」「导入 txt」（2026-09-26 用户要求：按钮放在**最左和最右侧**）
+   —— 导出是整行的第一个、导入是最后一个，再用 auto 外边距把剩余空间吃掉：
+   flex 会把剩余空间**均分**给两个 auto 边距，于是「导出」贴容器左边、
+   「导入」贴容器右边，中间那组（添加/返回/清空）自然落在正中。
+   ⚠️ 不能改用 `justify-content:space-between` —— 那会把这 6 个按钮等距摊开，
+      中间那组就散了，与「两端各一个、其余照旧居中」的诉求不符。
+   ⚠️ 窄屏（≤720px）每个按钮各占整行，auto 边距自动失效、退化成正常堆叠，
+      顺序仍是「导出」在最上、「导入」在最下。
+   ⚠️ 这两个按钮的文案本来就短（「导出 txt」/「导入 txt」），按**内容取宽**即可，
+      不必跟着中间那组吃 200px —— 省下的宽度正好让整行不换行。
+      代价是它们的选择器带 id（特异度高于 `.big-btn`），窄屏那条
+      `flex:1 1 100%` 压不住，要在窄屏媒体查询里再显式写一遍（见 @media）。 */
+.rank-actions #btn-export-board,
+.rank-actions #btn-import-board{flex:0 0 auto;padding-left:16px;padding-right:16px}
+.rank-actions #btn-export-board{margin-right:auto}
+.rank-actions #btn-import-board{margin-left:auto}
+
+/* 「添加队伍」只在**决赛**出现（初赛没有队伍概念）。
+   显隐由 `syncModeUI()` 在操作区上写 `data-board` 控制 —— 用 css 而非 `hidden` 属性，
+   这样「当前赛程」与按钮可见性是同一处真相，不会两边各写一份。 */
+.rank-actions #btn-add-team{display:none}
+.rank-actions[data-board="final"] #btn-add-team{display:inline-flex}
+
+/* --------------------------------------------------------------------------
+   队伍大框（决赛专属）—— 参考用户提供的赛事界面截图：
+   一个大框，左上角队名（大号粗体）、右上角队伍合计分（青绿），下面依次列队员行。
+   ⚠️ 队伍框内部**继续沿用 .rank-row 的 7 列 grid**（表头与行共用 --rk-cols），
+      所以队员行与顶部表头天然对齐。
+   -------------------------------------------------------------------------- */
+.team-box{
+  border:1px solid var(--border);border-radius:12px;
+  background:rgba(8,20,38,.5);
+  padding:10px 12px 12px;
+  margin-top:10px;
+}
+.team-box:first-child{margin-top:8px}
+/* 「未分组」是个虚拟框：虚线边、更淡，一眼看出它不是一个真实队伍 */
+.team-box-loose{border-style:dashed;background:rgba(8,20,38,.32)}
+
+/* 前 3 名队伍：**金 / 银 / 铜**（与选手行 .rank-row.top1~top3 **同一套色**，
+   连同左上角的次序 `.team-idx` 一起染色，一眼看出冠亚季）。
+   ⚠️ 选择器要写成 `.team-box.team-top1`（两个类）才压得住 `.team-box` 自己的
+      底色与边框（同特异度下后来者胜，但两个类更稳、也不用赌源码顺序）。 */
+.team-box.team-top1{border-color:rgba(255,181,71,.55);background:linear-gradient(90deg,rgba(255,181,71,.14),rgba(8,20,38,.5) 55%)}
+.team-box.team-top2{border-color:rgba(200,214,232,.45);background:linear-gradient(90deg,rgba(200,214,232,.11),rgba(8,20,38,.5) 55%)}
+.team-box.team-top3{border-color:rgba(214,146,90,.45);background:linear-gradient(90deg,rgba(214,146,90,.12),rgba(8,20,38,.5) 55%)}
+.team-box.team-top1 .team-idx{color:#ffb547}
+.team-box.team-top2 .team-idx{color:#c8d6e8}
+.team-box.team-top3 .team-idx{color:#d6925a}
+
+.team-head{
+  display:flex;align-items:center;gap:10px;
+  padding:2px 2px 9px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:9px;
+}
+/* 队名左侧的次序（真实队伍按**队伍合计分降序** 1、2、3…；2026-09-24 加）
+   ⚠️⚠️ **固定宽度、永远占位**：「未分组」不编号（元素留空但仍在 DOM 里），
+      所以它的队名左端与真实队伍对齐。真把它 display:none / 不 append 抽掉，
+      整行名字会左移一截（同「规则锁定」那次删除键占位被回收的坑）。 */
+.team-idx{
+  flex:none;width:26px;text-align:center;
+  font-size:15px;font-weight:900;letter-spacing:.5px;
+  font-variant-numeric:tabular-nums;
+  color:var(--text-mute);
+}
+.team-name{
+  flex:1;min-width:0;
+  display:flex;align-items:baseline;gap:9px;
+  font-size:16px;font-weight:900;letter-spacing:.6px;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.team-box-loose .team-name{font-size:14px;font-weight:700;color:var(--text-dim)}
+.team-count{
+  flex:none;font-size:11px;font-weight:400;letter-spacing:.5px;color:var(--text-mute);
+}
+/* 队伍合计分（队内成员总分之和）—— 用主题「正向」绿，与右侧「总分」列同族 */
+.team-sum{
+  flex:none;
+  font-size:19px;font-weight:900;letter-spacing:.5px;
+  font-variant-numeric:tabular-nums;
+  color:var(--accent-3);
+  text-shadow:0 0 12px rgba(0,255,163,.22);
+}
+/* 全队源石锭：**已使用** + **剩余**（2026-09-24 加「已使用」，2026-09-25 加「剩余」）——
+   与右侧合计分**同一种主题绿**（用户要求「同样用绿色标注」），
+   但每块都配了弱化小标签 + 小一号字号：几个绿色数字并排，不给标签就分不清谁是分、谁是锭。
+   ⚠️ 它**只展示、不参与队伍排序**（排序仍然只看 .team-sum 合计分）。
+   ⚠️ 两块之间（11px）要比块内标签与数字之间（4px）明显大 —— 否则
+      「已使用 20 剩余 100」会读成四个零散的字，看不出是两个「标签+数值」对。 */
+.team-yuan{
+  flex:none;display:flex;align-items:baseline;gap:11px;
+}
+.team-yuan-item{
+  display:flex;align-items:baseline;gap:4px;
+}
+.team-yuan-label{
+  font-size:10.5px;font-weight:400;letter-spacing:.5px;color:var(--text-mute);
+}
+.team-yuan-num{
+  font-size:15px;font-weight:900;letter-spacing:.5px;
+  font-variant-numeric:tabular-nums;
+  color:var(--accent-3);
+  text-shadow:0 0 10px rgba(0,255,163,.18);
+}
+/* 剩余为负 = 全队用得比决赛初始余额还多（超支）→ 这一块整块转红。
+   ⚠️ 只改颜色，**数值照印不截断**（「剩余 -30」比「剩余 0」信息量大得多）。 */
+.team-yuan-item.is-over .team-yuan-label{color:var(--danger)}
+.team-yuan-item.is-over .team-yuan-num{
+  color:var(--danger);
+  text-shadow:0 0 10px rgba(255,92,122,.2);
+}
+.team-del{
+  flex:none;appearance:none;-webkit-appearance:none;
+  width:22px;height:22px;padding:0;line-height:1;
+  border:1px solid transparent;border-radius:6px;
+  background:transparent;color:var(--text-mute);
+  font-family:inherit;font-size:12px;cursor:pointer;
+  transition:color .15s ease,border-color .15s ease,background .15s ease;
+}
+.team-del:hover{color:var(--danger);border-color:#7a2c3f;background:rgba(255,92,122,.12)}
+.team-del:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* --------------------------------------------------------------------------
+   拖拽入队（2026-09-24，仅决赛分组视图）
+   —— 在选手条上**纵向拖动**，这一条跟着指针抬起，松手落进指针所在的队伍框里。
+      横向向左仍然是「亮出行尾删除键」（见上），两者靠支配轴分流，互不干扰。
+   ⚠️ 落点高亮 `.team-box.is-drop-target` 必须写在冠亚季那三条「金银铜描边」规则**之后**：
+      两者特异度相同（都是「两个类」），同分靠源码顺序决胜负 —— 写在前面就会被
+      金银铜的边框色盖住，拖到冠军队时看不出「已选中这个框」。
+   -------------------------------------------------------------------------- */
+
+/* 被搬起来的那一行：淡出 + 换成虚线，一眼看出「它正在被挪走」 */
+.rank-row.is-dragging{
+  opacity:.32;
+  border-style:dashed;
+  border-color:var(--border-glow);
+  cursor:grabbing;
+}
+/* 搬动中不亮删除键（同一个手势不会同时是删除） */
+.rank-row.is-dragging .row-del{visibility:hidden;opacity:0}
+
+/* 指针当前所在的落点框：整体发绿光（与「队伍合计分」同一种绿，暗示「放这儿」） */
+.team-box.is-drop-target{
+  border-color:var(--accent-3);
+  box-shadow:0 0 0 1px rgba(0,255,163,.35), 0 0 22px rgba(0,255,163,.16);
+  background:rgba(0,255,163,.07);
+}
+.team-box.is-drop-target .team-name{color:var(--accent-3)}
+.team-box.is-drop-target .team-none{color:var(--text-dim)}
+
+/* --------------------------------------------------------------------------
+   双击队名就地改名（2026-09-24，仅决赛）
+   —— 双击队名 → 队名位置换成输入框、右侧多一个绿对勾；回车/点对勾确定，
+      Esc 或点框外放弃。输入框与对勾是进编辑态时**现插**的，平时不存在。
+   ⚠️ `.team-box.is-renaming` 与冠亚季的 `.team-box.team-top1~3` 特异度相同
+      （都是「两个类」），同分靠源码顺序决胜负 —— 所以这几条也写在金银铜**之后**，
+      跟上面的落点高亮同一个理由。
+   -------------------------------------------------------------------------- */
+.team-box.is-renaming{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px rgba(57,208,255,.22), 0 0 20px rgba(57,208,255,.1);
+}
+/* 队名让位给输入框。
+   ⚠️ 这里用 display:none 是**安全**的，与「规则锁定」那次性质不同：
+      那次是藏掉一个仍要占位的尾巴（回收宽度会把旁边文字推歪），
+      而这里是「队名 ↔ 输入框」二选一，输入框顶上队名原本的 flex:1 位置，
+      不会留下对不齐的空当。 */
+.team-box.is-renaming .team-name{display:none}
+
+.team-name-input{
+  flex:1 1 auto;min-width:0;
+  padding:3px 8px;
+  font-family:inherit;font-size:15px;font-weight:800;letter-spacing:.6px;
+  color:var(--text);
+  background:rgba(4,12,24,.85);
+  border:1px solid var(--accent);border-radius:7px;
+  outline:none;
+}
+.team-name-input::placeholder{color:var(--text-mute);font-weight:400;letter-spacing:0}
+
+/* 队名后面的「确定」对勾：主题正向绿，与「队伍合计分」同族（这里确实是「确定/成功」语义） */
+.team-rename-ok{
+  flex:none;appearance:none;-webkit-appearance:none;
+  width:24px;height:24px;padding:0;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid rgba(0,255,163,.45);border-radius:6px;
+  background:rgba(0,255,163,.12);color:var(--accent-3);
+  font-family:inherit;font-size:13px;font-weight:900;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease;
+}
+.team-rename-ok:hover{background:rgba(0,255,163,.24);border-color:var(--accent-3)}
+.team-rename-ok:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* 跟着指针跑的小牌子（显示选手名）。
+   ⚠️ pointer-events:none 是必须的 —— 否则它会挡住指针、每次移动都命中它自己，
+      往上找不到队伍框，「落点」就永远是空的。
+   ⚠️ 用 fixed 定位：它不进布局，拖多久都不会让后面的内容重排。 */
+.rank-drag-ghost{
+  position:fixed;left:0;top:0;z-index:60;
+  pointer-events:none;
+  padding:6px 14px;border-radius:9px;
+  border:1px solid rgba(57,208,255,.5);
+  background:rgba(8,20,38,.94);
+  color:var(--text);
+  font-size:13px;font-weight:700;letter-spacing:.5px;
+  white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:0 10px 28px rgba(0,0,0,.55), 0 0 18px rgba(57,208,255,.2);
+}
+
+/* 「未分组」筐里的行：把**纵向**手势从浏览器手里要回来，触屏也能把散人拖进队伍。
+   ⚠️ 代价是在这几行上纵向滑动不再滚动页面 —— 取舍是刻意的：
+      未分组是「待归队」的临时筐，通常就几个人，而这里正是最需要拖拽的地方；
+      真正的队伍框内仍保持 pan-y（滚动优先），免得长长的队员名单拖不动页面。 */
+.team-box-loose .team-body .rank-row{touch-action:none}
+
+.team-body{display:flex;flex-direction:column;gap:6px}
+/* 框内队员行：背景比平铺时更淡一点，视觉上「装在框里」 */
+.team-body .rank-row{background:rgba(8,20,38,.55)}
+.team-body .rank-row:hover{background:rgba(57,208,255,.08)}
+.team-none{
+  padding:14px 4px;text-align:center;
+  font-size:12.5px;color:var(--text-mute);
+}
+
+/* --------------------------------------------------------------------------
+   居中弹框（添加队伍 / 添加选手 / 源石锭余额设置）
+   —— 全屏半透明遮罩 + 居中卡片，与计分器主题一致。
+   ⚠️ 两个类名共用这一套样式：
+        `.rank-modal`    = 榜单页 ranking.html 的 #rank-modal；
+        `.modal-overlay` = 计分器 index.html 的 #yuan-modal（源石锭余额设置）。
+        新弹框直接挂 .modal-overlay，别再复制一份样式。
+   ⚠️ 开关走 `hidden` 属性：`.modal-overlay[hidden]{display:none}` 必须写 ——
+      `display:flex` 会盖掉 `hidden` 自带的 `display:none`（UA 样式优先级更低），
+      不写这句弹框会「关不掉」。
+   -------------------------------------------------------------------------- */
+.modal-overlay,.rank-modal{
+  position:fixed;inset:0;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  background:rgba(3,8,16,.72);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+}
+.modal-overlay[hidden],.rank-modal[hidden]{display:none}
+
+.modal-card{
+  width:100%;max-width:420px;
+  border:1px solid var(--border-glow);border-radius:14px;
+  background:var(--bg-panel-2);
+  box-shadow:0 0 40px rgba(57,208,255,.18), 0 18px 50px rgba(0,0,0,.55);
+  padding:18px 20px 16px;
+  animation:modalIn .16s ease-out;
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
+
+.modal-title{
+  font-size:15px;font-weight:800;letter-spacing:1.5px;color:var(--text);
+  margin-bottom:14px;
+}
+.modal-body{display:flex;flex-direction:column;gap:12px}
+.modal-field{display:flex;flex-direction:column;gap:6px}
+.modal-label{font-size:11.5px;letter-spacing:1.2px;color:var(--text-mute)}
+.modal-input,.modal-select{
+  width:100%;padding:9px 12px;border-radius:9px;
+  border:1px solid var(--border);background:rgba(5,11,22,.85);
+  color:var(--text);font-family:inherit;font-size:13px;
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.modal-input:focus,.modal-select:focus{
+  outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(57,208,255,.16);
+}
+.modal-input::placeholder{color:var(--text-mute)}
+.modal-select{cursor:pointer}
+.modal-file{
+  width:100%;padding:8px 10px;border-radius:9px;
+  border:1px dashed var(--border);background:rgba(5,11,22,.6);
+  color:var(--text-dim);font-family:inherit;font-size:12px;cursor:pointer;
+}
+.modal-file:hover{border-color:var(--border-glow)}
+.modal-hint{font-size:11px;color:var(--text-mute);letter-spacing:.3px}
+.modal-err{
+  margin-top:10px;padding:7px 11px;border-radius:8px;
+  border:1px solid #7a2c3f;background:rgba(255,92,122,.1);
+  color:var(--danger);font-size:12px;line-height:1.6;
+}
+.modal-err[hidden]{display:none}
+
+.modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+/* 弹框里的按钮不要像 .rank-actions 里那样被拉成 240px 宽 */
+.modal-btns .big-btn{flex:0 0 auto;min-width:92px;padding-left:18px;padding-right:18px}
+
+/* 操作提示条（导入成功 / 失败反馈，不打断操作） */
+.rank-toast{
+  margin-top:12px;padding:9px 14px;border-radius:10px;
+  font-size:12.5px;line-height:1.7;text-align:center;
+  border:1px solid var(--border-glow);
+  background:rgba(57,208,255,.09);color:var(--text-dim);
+}
+.rank-toast.ok{border-color:#1d7a56;background:rgba(0,255,163,.1);color:var(--accent-3)}
+.rank-toast.err{border-color:#7a2c3f;background:rgba(255,92,122,.1);color:var(--danger)}
+.rank-toast ul{margin:6px 0 0;padding-left:18px;text-align:left;display:inline-block}
+.rank-toast li{margin:2px 0}
+/* 每条记录的来源时间小字 */
+.rank-row .rk-name small{display:block;font-size:10.5px;color:var(--text-mute);font-weight:400;letter-spacing:.3px}
+
+/* 窄屏：收窄列宽、隐藏「基础分/倍率」两列，
+   保留 名次 / 选手 / 团队加分 / 源石锭消耗 / 总分。
+   ⚠️ 用 `:not(.rk-total):not(.rk-team):not(.rk-yuan)` 精确排除 ——
+      团队加分与源石锭消耗两列都要留下，否则窄屏就看不到它们了。
+      （漏写 `:not()` 会让表头与数据行对不上，出现没标题的数字列，2026-09-23 踩过。） */
+@media (max-width:720px){
+  .rank-panel{--rk-cols:40px minmax(0,1fr) 72px 90px 92px;--rk-del-w:24px}
+  .rank-head .rk-num:not(.rk-total):not(.rk-team):not(.rk-yuan){display:none}
+  .rank-row .rk-num:not(.rk-total):not(.rk-team):not(.rk-yuan){display:none}
+  .rank-row{padding:8px 10px}
+  .rank-row .rk-name{font-size:12.5px}
+  .rank-row .rk-total{font-size:15px}
+  .rank-row .row-del{width:22px;height:22px;font-size:11px}
+  .rank-actions .big-btn{flex:1 1 100%}
+  /* ⚠️ 上面那条（类选择器）压不住带 id 的「导出 / 导入」→ 这里显式改回整行，
+       否则窄屏会出现「两个窄按钮 + 四个整行按钮」的错位。 */
+  .rank-actions #btn-export-board,
+  .rank-actions #btn-import-board{flex:1 1 100%;padding-left:22px;padding-right:22px}
+  /* 队伍框：内边距收紧，队名与合计分不挤在一起 */
+  .team-box{padding:8px 9px 10px}
+  .team-idx{width:20px;font-size:13px}
+  .team-name{font-size:14px}
+  .team-sum{font-size:16px}
+  /* 窄屏下队头几个元素要挤在一行：队头间距收紧、源石锭再矮一档
+     （「已使用 N 剩余 M」两块比原来长，所以块间距离也一并收） */
+  .team-head{gap:7px}
+  .team-name-input{font-size:14px;padding:2px 6px}
+  .team-yuan{gap:7px}
+  .team-yuan-item{gap:3px}
+  .team-yuan-label{font-size:10px;letter-spacing:0}
+  .team-yuan-num{font-size:13px}
+  .modal-card{padding:15px 16px 13px}
+  .modal-btns .big-btn{flex:1 1 0;min-width:0}
+}
+
+/* ==========================================================================
+   滚动条
+   ========================================================================== */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg-deep)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-glow)}

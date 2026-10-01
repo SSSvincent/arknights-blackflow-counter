@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黑流树海粥集杯#1 计分器</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ============ HEADER（纯图片，无任何叠加文字/方框） ============ -->
+  <header class="header">
+    <img src="img/title%20background.png"
+         alt="沉沦者的黑流树海 主题图"
+         width="1560" height="500">
+  </header>
+
+  <!-- ============ 赛事规则（通栏面板：位于头图与所有栏目之间） ============
+       自上而下三段：标题 / 规则列表 / 输入框。
+       列表恒居中，条目左侧显示序号、右侧删除键，整行可拖动排序。
+       内容是「赛事配置」而非某位选手的成绩，所以「归零」不会清掉它。 -->
+  <section class="panel rules-panel">
+    <h2>赛事规则</h2>
+
+    <ol class="rules-list" id="rules-list"></ol>
+    <div class="rules-empty" id="rules-empty">还没有规则，在下面的输入框里输入后按回车即可添加</div>
+
+    <div class="rules-input-row">
+      <input class="text-input rules-input" type="text" id="rules-input"
+             autocomplete="off" spellcheck="false"
+             placeholder="输入一条赛事规则，按回车添加" aria-label="新增赛事规则">
+      <!-- 锁定开关：锁定后规则转为只读（隐藏删除键与条目背景、禁止拖动、停用输入框） -->
+      <button type="button" class="rules-lock" id="rules-lock" aria-pressed="false"
+              title="点击锁定：隐藏删除键并禁止修改">锁定</button>
+    </div>
+  </section>
+
+  <!-- ============ 主布局 ============
+       面板在 DOM 里是一串平铺的 .panel，栏数（3 / 2 / 1）与各栏装哪几块
+       由 js/app.js 的 syncColumns() 按容器宽度实时分配，见 css 里的 .layout / .panel.grow。
+       DOM 顺序 = 阅读顺序，分配的算法保证大致从左到右、从上到下。 -->
+  <div class="layout" id="layout">
+
+    <!-- 选手 -->
+    <section class="panel">
+      <h2>选手</h2>
+      <div class="field">
+        <label>选手名</label>
+        <input class="text-input" type="text" id="player-name" value=""
+               autocomplete="off" spellcheck="false" placeholder="请输入选手名" aria-label="选手名">
+      </div>
+    </section>
+
+    <!-- 临时招募 -->
+    <section class="panel">
+      <h2>临时招募</h2>
+      <div class="row">
+        <div class="label">六星干员</div>
+        <div class="val">+50</div>
+        <button type="button" class="btn minus" data-act="dec" data-key="six">−</button>
+        <input class="count-input" type="number" min="0" data-key="six" value="0" aria-label="六星干员数量">
+        <button type="button" class="btn" data-act="inc" data-key="six">＋</button>
+      </div>
+      <div class="row">
+        <div class="label">五星干员</div>
+        <div class="val">+20</div>
+        <button type="button" class="btn minus" data-act="dec" data-key="five">−</button>
+        <input class="count-input" type="number" min="0" data-key="five" value="0" aria-label="五星干员数量">
+        <button type="button" class="btn" data-act="inc" data-key="five">＋</button>
+      </div>
+      <div class="row">
+        <div class="label">四星干员</div>
+        <div class="val">+10</div>
+        <button type="button" class="btn minus" data-act="dec" data-key="four">−</button>
+        <input class="count-input" type="number" min="0" data-key="four" value="0" aria-label="四星干员数量">
+        <button type="button" class="btn" data-act="inc" data-key="four">＋</button>
+      </div>
+      <div class="subtotal"><span>招募小计</span><b data-sub="recruit">0</b></div>
+    </section>
+
+    <!-- 通关时长加减分 -->
+    <section class="panel">
+      <h2>通关时长加减分</h2>
+      <div class="hint">≤2:00 +60 · ≤2:30 +50 · 2:30~3:00 计0 · 超3:00 每分-10 · ≥3:30 后超出部分每分-30（阶梯累进）</div>
+      <div class="field">
+        <label>通关时长</label>
+        <div class="dur-inputs">
+          <input class="text-input dur-num" type="number" id="dur-h" value="0" min="0" max="99" aria-label="小时">
+          <span class="dur-unit">小时</span>
+          <input class="text-input dur-num" type="number" id="dur-m" value="0" min="0" max="59" aria-label="分钟">
+          <span class="dur-unit">分钟</span>
+        </div>
+      </div>
+      <div class="row warn" style="margin-top:6px">
+        <div class="label">合计</div>
+        <div class="val" id="dur-total">未填写</div>
+      </div>
+      <div class="row">
+        <div class="label">判定<small id="dur-tier">未填写</small></div>
+        <div class="val" id="dur-verdict">+0</div>
+      </div>
+      <div class="subtotal"><span>时长小计</span><b data-sub="duration">0</b></div>
+    </section>
+
+    <!-- 关卡通关加分 -->
+    <section class="panel">
+      <h2>关卡通关加分</h2>
+      <div id="emergency-list"></div>
+      <div class="subtotal"><span>关卡通关小计</span><b data-sub="emergency">0</b></div>
+    </section>
+
+    <!-- 源石锭 -->
+    <section class="panel warn">
+      <!-- 标题右侧的齿轮 → 打开「源石锭余额设置」弹框（初赛/决赛两档余额可改）
+           ⚠️ `<h2>` 与 `<button>` 之间**不能有换行/空格**：`.panel h2` 是 flex 容器，
+              混进空白文本节点会多出一个匿名 flex item，把齿轮挤离右端。 -->
+      <h2>源石锭<button type="button" class="panel-gear" id="btn-yuan-settings"
+                        title="源石锭余额设置" aria-label="源石锭余额设置">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+      </button></h2>
+
+      <!-- 二选一：初赛 / 决赛 -->
+      <div class="field">
+        <label>计分模式</label>
+        <div class="mode-switch">
+          <button type="button" class="mode-btn active" data-yuan-mode="prelim">初赛</button>
+          <button type="button" class="mode-btn" data-yuan-mode="final">决赛</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>开始前源石锭数</label>
+        <input class="text-input" type="number" id="yuan-start" value="0" min="0">
+      </div>
+      <div class="field">
+        <label>结束后源石锭数</label>
+        <input class="text-input" type="number" id="yuan-end" value="0" min="0">
+      </div>
+
+      <div class="row warn" style="margin-top:6px">
+        <div class="label">消耗点数</div>
+        <div class="val" id="yuan-taken">0</div>
+      </div>
+
+      <!-- ===== 初赛：余额固定 60 ===== -->
+      <div id="yuan-prelim">
+        <div class="row">
+          <div class="label">源石锭余额</div>
+          <div class="val" id="yuan-prelim-bal">60</div>
+        </div>
+      </div>
+
+      <!-- ===== 决赛：余额区（勾选决赛时展开） ===== -->
+      <div id="yuan-final" hidden>
+        <div class="row">
+          <div class="label">初始源石锭余额</div>
+          <div class="val" id="yuan-init">120</div>
+        </div>
+        <div class="field" style="margin-top:8px">
+          <label>上一位选手使用源石锭点数</label>
+          <input class="text-input num-only" type="text" id="yuan-prev" value="0"
+                 inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="上一位选手使用源石锭点数">
+        </div>
+        <div class="row">
+          <div class="label">当前选手可用源石锭余额</div>
+          <div class="val" id="yuan-avail">120</div>
+        </div>
+      </div>
+
+      <div class="row danger">
+        <div class="label">超额扣分</div>
+        <div class="val" id="yuan-penalty">0</div>
+      </div>
+      <div class="subtotal"><span>源石锭小计</span><b data-sub="yuan">0</b></div>
+    </section>
+
+    <!-- 违规扣分 -->
+    <section class="panel danger">
+      <h2>违规扣分</h2>
+      <div id="violation-list"></div>
+      <div class="subtotal"><span>违规小计</span><b data-sub="violation">0</b></div>
+    </section>
+
+    <!-- 击杀特殊敌人 -->
+    <section class="panel green">
+      <h2>击杀特殊敌人</h2>
+      <div id="special-list"></div>
+      <div class="subtotal"><span>特殊敌人小计</span><b data-sub="special">0</b></div>
+    </section>
+
+    <!-- 藏品与路线加分 -->
+    <section class="panel purple">
+      <h2>藏品与路线加分</h2>
+      <div id="route-list"></div>
+      <div class="subtotal"><span>藏品与路线小计</span><b data-sub="route">0</b></div>
+    </section>
+
+    <!-- 商店加分 -->
+    <section class="panel purple">
+      <h2>商店加分</h2>
+      <div id="kannuote-list"></div>
+      <div class="subtotal"><span>商店小计</span><b data-sub="kannuote">0</b></div>
+    </section>
+
+  </div>
+
+  <!-- ============ 通关结算 + 总分（横跨整幅，页面最后一块） ============
+       内部并排两列：左＝结算输入（结算分/零件数量/通关得分/沉沦者），
+                     右＝总分展示（玩家名 + 总分数字 + 分项明细 + 归零）。
+       窄屏（≤720px）时两列自动上下堆叠，见 css 里的 .total-grid。 -->
+  <section class="panel total-panel">
+    <h2>通关结算</h2>
+    <div class="total-grid">
+
+      <!-- 左列：结算输入 -->
+      <div class="total-left">
+        <div class="hint">通关得分 =（结算分 − 零件数量 × 5）÷ 2</div>
+        <div class="field">
+          <label>结算分</label>
+          <input class="text-input num-only" type="text" id="settle-score" value="0"
+                 inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="结算分">
+        </div>
+        <div class="field">
+          <label>零件数量</label>
+          <input class="text-input num-only" type="text" id="parts-count" value="0"
+                 inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="零件数量">
+        </div>
+        <div class="subtotal"><span>通关得分</span><b data-sub="clearscore">0</b></div>
+
+        <!-- 沉沦者：勾选后个人基础分 ×1.3 -->
+        <div id="chenlun-list"></div>
+      </div>
+
+      <!-- 右列：玩家名 + 总分 -->
+      <div class="total-section">
+        <div class="total-header">
+          <div class="total-label">总 分</div>
+        </div>
+        <!-- 选手名：字体样式与总分数字一致；未填写时显示 Player -->
+        <div class="total-value total-name" id="total-name">Player</div>
+        <div class="total-value" id="total-value">0</div>
+        <div class="breakdown" id="breakdown"></div>
+        <div class="total-btns">
+          <button type="button" class="big-btn green" id="btn-export">导出</button>
+          <button type="button" class="big-btn danger" id="btn-reset">归零</button>
+          <button type="button" class="big-btn blue" id="btn-import">导入</button>
+        </div>
+        <!-- 查看实时榜单：在新标签打开 ranking.html（纯静态榜单页，与本站同风格） -->
+        <div class="total-btns total-btns-second">
+          <a class="big-btn purple" id="btn-ranking"
+             href="ranking.html" target="_blank" rel="noopener noreferrer">查看实时榜单</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 页脚署名（纯展示，不参与计分与布局分栏） ============ -->
+  <footer class="page-footer">
+    作者：<a href="https://space.bilibili.com/510463176" target="_blank" rel="noopener noreferrer">拾柒ACTV</a>
+    　协同开发：<a href="https://www.workbuddy.cn" target="_blank" rel="noopener noreferrer">WorkBuddy</a>　<a href="https://space.bilibili.com/11417698" target="_blank" rel="noopener noreferrer">祁星qimstar</a>
+    　版本：1.0.1　日期：2026.9.23
+  </footer>
+
+  <!-- ============ 源石锭余额设置弹框（点面板标题右侧的齿轮打开） ============
+       用户 2026-09-25 要求：上方两个输入框分别改初赛 / 决赛的源石锭余额，
+       下方是「应用」「取消」两个按键。
+       ⚠️ 与榜单页的 #rank-modal **共用同一套 .modal-* 样式**（见 css），
+          所以这里只用 .modal-* 类 + 一个 .modal-overlay 外壳，不另起样式。
+       ⚠️ 弹框是**静态标记**（JS 不在这里拼 DOM），JS 只负责开/关与内容填充。
+       ⚠️ 开关走 `hidden` 属性：它是逻辑层真相（单测桩没有 css，靠它断言），
+          css 的 `.modal-overlay[hidden]{display:none}` 是表现层。 -->
+  <div class="modal-overlay" id="yuan-modal" hidden role="dialog" aria-modal="true"
+       aria-labelledby="yuan-modal-title">
+    <div class="modal-card">
+      <h3 class="modal-title" id="yuan-modal-title">源石锭余额设置</h3>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label class="modal-label" for="yuan-init-prelim">初赛 · 源石锭余额</label>
+          <input class="modal-input num-only" type="text" id="yuan-init-prelim" value="60"
+                 inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+                 aria-label="初赛源石锭余额">
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="yuan-init-final">决赛 · 初始源石锭余额</label>
+          <input class="modal-input num-only" type="text" id="yuan-init-final" value="120"
+                 inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+                 aria-label="决赛初始源石锭余额">
+        </div>
+        <p class="modal-hint">改动后立即按新余额重算消耗点数与超额扣分；该设置随 txt 存档一起保存。</p>
+      </div>
+      <div class="modal-btns">
+        <button type="button" class="big-btn green" id="yuan-modal-apply">应用</button>
+        <button type="button" class="big-btn" id="yuan-modal-cancel">取消</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/app.js"></script>
+
+
+
+</body>
+</html>
