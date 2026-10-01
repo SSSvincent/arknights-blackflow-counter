@@ -4,9 +4,9 @@
 
 **零后端、零依赖、零构建** —— 下载即用，或直接开网页。
 
-> 🔗 在线使用：**https://<你的GitHub用户名>.github.io/arknights-blackflow-counter/**
+> 🔗 在线使用：**https://sssvincent.github.io/arknights-blackflow-counter/**
 >
-> （部署好 GitHub Pages 之后，把上面 `<>` 里的用户名换成你自己的）
+> （仓库：https://github.com/SSSvincent/arknights-blackflow-counter）
 
 ---
 
@@ -29,14 +29,14 @@
 
 ### 方式 A：直接用网页（无需安装任何东西）
 
-打开 **https://<你的GitHub用户名>.github.io/arknights-blackflow-counter/**
+打开 **https://sssvincent.github.io/arknights-blackflow-counter/**
 
 ### 方式 B：本地部署
 
 1. 在仓库页面点 **Code → Download ZIP** 解压，或者：
 
    ```bash
-   git clone https://github.com/<你的GitHub用户名>/arknights-blackflow-counter.git
+   git clone https://github.com/SSSvincent/arknights-blackflow-counter.git
    ```
 
 2. **直接双击 `index.html`** 就能开始用。
@@ -120,10 +120,15 @@ node _test/e2e-counter.js   # 计分器首页端到端
 
 ## 发布到 GitHub Pages（维护者）
 
-1. 把代码推到 GitHub（默认分支 `main`）。
+1. 把代码推到 GitHub（默认分支 `main`）：
+
+   ```bash
+   git remote add origin https://github.com/SSSvincent/arknights-blackflow-counter.git
+   git push -u origin main
+   ```
 2. 仓库 **Settings → Pages → Build and deployment**，Source 选 **Deploy from a branch**，
    分支选 **`main`**、目录选 **`/ (root)`**，保存。
-3. 等一两分钟，访问 `https://<你的GitHub用户名>.github.io/arknights-blackflow-counter/`。
+3. 等一两分钟，访问 `https://sssvincent.github.io/arknights-blackflow-counter/`。
 
 因为站内所有资源引用都是**相对路径**（`css/…`、`js/…`、`img/…`），放在子路径下不需要任何额外配置。
 
